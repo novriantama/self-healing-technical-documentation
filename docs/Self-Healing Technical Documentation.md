@@ -9,7 +9,7 @@
 | Language | Python 3.11+ / TypeScript | Your choice; both work in GitHub Actions |
 | Embeddings | OpenAI text-embedding-3-small | Cheap, fast, high quality |
 | Vector Store | ChromaDB (file-based) | No server needed; persists to disk |
-| LLM | GPT-4o or Claude Sonnet | Strong code understanding |
+| LLM | Claude Sonnet 4.6 | Strong code understanding, state-of-the-art code reasoning |
 | Git Integration | PyGithub \+ git diff | PR creation and diff parsing |
 | CI/CD | GitHub Actions | Native integration, free tier |
 | Containerization | Docker (for the Action) | Reproducible runs |
