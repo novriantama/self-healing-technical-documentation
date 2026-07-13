@@ -1,6 +1,8 @@
-from typing import List, Dict, Set
+from typing import List, Set
+
 # pyrefly: ignore [missing-import]
 from src.interfaces.gateways.index_store import IndexStoreGateway
+
 
 class QueryAffectedDocsUseCase:
     def __init__(self, index_store: IndexStoreGateway):
@@ -16,4 +18,4 @@ class QueryAffectedDocsUseCase:
         for chunk_id in changed_chunk_ids:
             if chunk_id in graph:
                 affected.update(graph[chunk_id])
-        return sorted(list(affected))
+        return sorted(affected)

@@ -1,10 +1,13 @@
 import json
 import os
 from typing import Dict, List
-# pyrefly: ignore [missing-import]
-from src.interfaces.gateways.index_store import IndexStoreGateway
+
 # pyrefly: ignore [missing-import]
 from src.domain.exceptions import ParserError
+
+# pyrefly: ignore [missing-import]
+from src.interfaces.gateways.index_store import IndexStoreGateway
+
 
 class JsonIndexStore(IndexStoreGateway):
     def save(self, graph: Dict[str, List[str]], filepath: str) -> None:

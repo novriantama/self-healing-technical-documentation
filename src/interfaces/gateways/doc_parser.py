@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List
+
 from src.domain.models import DocSection
+
 
 class DocParserGateway(ABC):
     @abstractmethod

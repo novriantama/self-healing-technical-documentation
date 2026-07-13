@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
+
 class IndexStoreGateway(ABC):
     @abstractmethod
     def save(self, graph: Dict[str, List[str]], filepath: str) -> None:

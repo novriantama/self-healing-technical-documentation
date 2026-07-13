@@ -1,8 +1,11 @@
-import chromadb
 from typing import List
-from src.interfaces.gateways.vector_store import VectorStoreGateway
-from src.domain.models import DocSection
+
+import chromadb
+
 from src.domain.exceptions import VectorStoreError
+from src.domain.models import DocSection
+from src.interfaces.gateways.vector_store import VectorStoreGateway
+
 
 class ChromaVectorStore(VectorStoreGateway):
     def __init__(self, db_dir: str):
@@ -19,28 +22,25 @@ class ChromaVectorStore(VectorStoreGateway):
                 self._collection.add(
                     documents=[section.content],
                     metadatas=[{"heading_path": section.heading_path, "references": ",".join(section.references)}],
-                    ids=[f"sec_{i}"]
+                    ids=[f"sec_{i}"],
                 )
         except Exception as e:
             raise VectorStoreError(f"Failed to add documents to ChromaDB: {e}") from e
 
     def search_similar_sections(self, code_query: str, limit: int = 3) -> List[DocSection]:
         try:
-            results = self._collection.query(
-                query_texts=[code_query],
-                n_results=limit
-            )
+            results = self._collection.query(query_texts=[code_query], n_results=limit)
             sections = []
             if results and "documents" in results and results["documents"]:
                 documents = results["documents"][0]
                 metadatas = results["metadatas"][0]
                 for doc, meta in zip(documents, metadatas):
                     refs = meta.get("references", "").split(",") if meta.get("references") else []
-                    sections.append(DocSection(
-                        heading_path=meta.get("heading_path", ""),
-                        content=doc,
-                        references=[r for r in refs if r]
-                    ))
+                    sections.append(
+                        DocSection(
+                            heading_path=meta.get("heading_path", ""), content=doc, references=[r for r in refs if r]
+                        )
+                    )
             return sections
         except Exception as e:
             raise VectorStoreError(f"Failed to query ChromaDB: {e}") from e

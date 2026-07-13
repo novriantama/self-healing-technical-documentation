@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List
+
 from src.domain.models import CodeChunk
+
 
 class CodeParserGateway(ABC):
     @abstractmethod
