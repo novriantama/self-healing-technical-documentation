@@ -9,7 +9,6 @@ class Settings(BaseSettings):
     )
 
     anthropic_api_key: str = Field(..., validation_alias="ANTHROPIC_API_KEY")
-    openai_api_key: str = Field("", validation_alias="OPENAI_API_KEY")  # Optional: for OpenAI embeddings
     
     confidence_threshold: float = Field(0.8, validation_alias="CONFIDENCE_THRESHOLD")
     workspace_dir: str = Field(".", validation_alias="WORKSPACE_DIR")
