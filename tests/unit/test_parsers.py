@@ -1,7 +1,10 @@
+# pyrefly: ignore [missing-import]
 import pytest
 import tempfile
 import os
+# pyrefly: ignore [missing-import]
 from src.infrastructure.parsers.ast_code_parser import AstCodeParser
+# pyrefly: ignore [missing-import]
 from src.domain.exceptions import ParserError
 
 MOCK_SOURCE_CODE = """
@@ -110,3 +113,68 @@ def test_ast_code_parser_invalid_file():
     parser = AstCodeParser()
     with pytest.raises(ParserError):
         parser.parse_file("non_existent_file.py")
+
+
+# pyrefly: ignore [missing-import]
+from src.infrastructure.parsers.mistletoe_doc_parser import MistletoeDocParser
+
+MOCK_DOC_CONTENT = """
+# API Documentation
+
+This is the main API section. We use `get_item` endpoint to fetch information.
+
+## Configuration
+
+Settings for the application:
+* `PORT` - The port to listen on.
+* `ANTHROPIC_API_KEY` - LLM service key.
+* The settings are loaded into `EngineConfig` class.
+
+### CLI Usage
+
+You can launch using command `process_data(count)`.
+We also reference calculate_tax function.
+"""
+
+def test_mistletoe_doc_parser_sections():
+    parser = MistletoeDocParser()
+    
+    with tempfile.NamedTemporaryFile(suffix=".md", delete=False, mode="w", encoding="utf-8") as temp_file:
+        temp_file.write(MOCK_DOC_CONTENT)
+        temp_filepath = temp_file.name
+
+    try:
+        sections = parser.parse_file(temp_filepath)
+        
+        # We expect 3 sections under heading paths:
+        # 1. API Documentation
+        # 2. API Documentation > Configuration
+        # 3. API Documentation > Configuration > CLI Usage
+        
+        assert len(sections) == 3
+        
+        sec_dict = {sec.heading_path: sec for sec in sections}
+        
+        assert "API Documentation" in sec_dict
+        sec1 = sec_dict["API Documentation"]
+        assert "get_item" in sec1.references
+        
+        assert "API Documentation > Configuration" in sec_dict
+        sec2 = sec_dict["API Documentation > Configuration"]
+        assert "PORT" in sec2.references
+        assert "ANTHROPIC_API_KEY" in sec2.references
+        assert "EngineConfig" in sec2.references
+        
+        assert "API Documentation > Configuration > CLI Usage" in sec_dict
+        sec3 = sec_dict["API Documentation > Configuration > CLI Usage"]
+        assert "process_data" in sec3.references
+        assert "calculate_tax" in sec3.references
+        
+    finally:
+        os.remove(temp_filepath)
+
+def test_mistletoe_doc_parser_invalid_file():
+    parser = MistletoeDocParser()
+    with pytest.raises(ParserError):
+        parser.parse_file("non_existent_doc.md")
+

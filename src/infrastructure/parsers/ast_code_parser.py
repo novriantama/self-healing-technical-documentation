@@ -1,7 +1,10 @@
 import ast
 from typing import List, Optional
+# pyrefly: ignore [missing-import]
 from src.interfaces.gateways.code_parser import CodeParserGateway
+# pyrefly: ignore [missing-import]
 from src.domain.models import CodeChunk
+# pyrefly: ignore [missing-import]
 from src.domain.exceptions import ParserError
 
 def get_decorator_name(decorator: ast.AST) -> str:
