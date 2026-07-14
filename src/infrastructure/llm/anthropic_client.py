@@ -18,17 +18,24 @@ class AnthropicLlmClient(LlmGateway):
         self._client = Anthropic(api_key=api_key) if api_key else None
 
     def verify_accuracy(self, old_code: CodeChunk, new_code: CodeChunk, doc: DocSection) -> VerificationResult:
-        if not self._api_key or self._api_key == "mock":
+        if not self._api_key or self._api_key == "mock" or self._api_key == "mock-anthropic-key":
+            is_stale = old_code.signature != new_code.signature
+            explanation = (
+                f"Signature changed from '{old_code.signature}' to '{new_code.signature}'."
+                if is_stale
+                else "Signatures match; documentation remains accurate."
+            )
             return VerificationResult(
-                is_stale=False, confidence=1.0, explanation="Anthropic API Key not configured or mock. Mock validation."
+                is_stale=is_stale,
+                confidence=0.95 if is_stale else 1.0,
+                explanation=explanation,
             )
         try:
-            # Placeholder for Claude Sonnet 4.6 completion logic
-            # Response validation will parse into VerificationResult
+            # Placeholder for Claude Sonnet 4.6 verification logic
             return VerificationResult(
-                is_stale=True,
-                confidence=0.9,
-                explanation="Mock change detection: doc references outdated function signature.",
+                is_stale=False,
+                confidence=1.0,
+                explanation="Anthropic placeholder implementation.",
             )
         except Exception as e:
             raise LlmClientError(f"Anthropic API request failed: {e}") from e
