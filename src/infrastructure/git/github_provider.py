@@ -5,6 +5,7 @@ from github import Github
 
 # pyrefly: ignore [missing-import]
 from src.domain.exceptions import GitError
+
 # pyrefly: ignore [missing-import]
 from src.interfaces.gateways.git_provider import GitProviderGateway
 
