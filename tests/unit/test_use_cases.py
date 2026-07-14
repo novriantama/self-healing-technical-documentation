@@ -83,6 +83,9 @@ class MockLlmClient(LlmGateway):
         only_comments_or_whitespace = all(line[1:].strip().startswith("#") or not line[1:].strip() for line in lines)
         return not only_comments_or_whitespace
 
+    def validate_correction(self, patch, new_code) -> VerificationResult:
+        return VerificationResult(is_stale=False, confidence=1.0, explanation="")
+
 
 class MockGitProvider(GitProviderGateway):
     def get_modified_lines(self, diff_text: str) -> dict:

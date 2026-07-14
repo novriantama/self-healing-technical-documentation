@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 # pyrefly: ignore [missing-import]
-from src.domain.models import CodeChunk, DocSection, VerificationResult
+from src.domain.models import CodeChunk, DocPatch, DocSection, VerificationResult
 
 
 class LlmGateway(ABC):
@@ -23,4 +23,9 @@ class LlmGateway(ABC):
     @abstractmethod
     def is_change_meaningful(self, chunk_name: str, diff_text: str) -> bool:
         """Determines if the given code chunk diff constitutes a meaningful change that affects docs."""
+        pass
+
+    @abstractmethod
+    def validate_correction(self, patch: DocPatch, new_code: CodeChunk) -> VerificationResult:
+        """Runs a second validation pass on a generated DocPatch to check description accuracy and style consistency."""
         pass

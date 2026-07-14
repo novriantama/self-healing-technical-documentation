@@ -5,7 +5,7 @@ from anthropic import Anthropic
 from src.domain.exceptions import LlmClientError
 
 # pyrefly: ignore [missing-import]
-from src.domain.models import CodeChunk, DocSection, VerificationResult
+from src.domain.models import CodeChunk, DocPatch, DocSection, VerificationResult
 
 # pyrefly: ignore [missing-import]
 from src.interfaces.gateways.llm import LlmGateway
@@ -77,5 +77,26 @@ class AnthropicLlmClient(LlmGateway):
         try:
             # Claude Sonnet 4.6 classification logic placeholder
             return True
+        except Exception as e:
+            raise LlmClientError(f"Anthropic API request failed: {e}") from e
+
+    def validate_correction(self, patch: DocPatch, new_code: CodeChunk) -> VerificationResult:
+        if not self._api_key or self._api_key == "mock" or self._api_key == "mock-anthropic-key":
+            is_valid = (
+                "Repaired by Claude Sonnet 4.6 (Mock)" in patch.repaired_content
+                and "RejectMe" not in patch.repaired_content
+            )
+            return VerificationResult(
+                is_stale=not is_valid,
+                confidence=1.0,
+                explanation=(
+                    "Mock validation check passed successfully."
+                    if is_valid
+                    else "Rejected: Mock invalidation keyword 'RejectMe' triggered or repaired content missing."
+                ),
+            )
+        try:
+            # Placeholder for Claude Sonnet 4.6 verification logic
+            return VerificationResult(is_stale=False, confidence=1.0, explanation="Validation passed placeholder.")
         except Exception as e:
             raise LlmClientError(f"Anthropic API request failed: {e}") from e

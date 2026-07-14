@@ -75,6 +75,9 @@ class MockLlmClient(LlmGateway):
     def is_change_meaningful(self, chunk_name: str, diff_text: str) -> bool:
         return True
 
+    def validate_correction(self, patch, new_code) -> VerificationResult:
+        return VerificationResult(is_stale=False, confidence=1.0, explanation="")
+
 
 def test_identify_stale_docs():
     git_provider = MockGitProvider()
