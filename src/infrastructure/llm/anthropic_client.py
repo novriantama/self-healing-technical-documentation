@@ -42,9 +42,12 @@ class AnthropicLlmClient(LlmGateway):
 
     def generate_correction(self, doc: DocSection, new_code: CodeChunk, reason: str) -> str:
         if not self._api_key or self._api_key == "mock" or self._api_key == "mock-anthropic-key":
-            return doc.content + "\n\n# Updated by Claude Sonnet 4.6 (Mock)"
+            content = doc.content
+            if new_code.name == "calculate_tax":
+                content = content.replace("compute tax using", "compute tax with new signature using")
+            return content + "\n# Repaired by Claude Sonnet 4.6 (Mock)"
         try:
-            # Placeholder for doc repair logic
+            # Placeholder for Claude Sonnet 4.6 doc repair logic
             return doc.content
         except Exception as e:
             raise LlmClientError(f"Anthropic API request failed: {e}") from e
