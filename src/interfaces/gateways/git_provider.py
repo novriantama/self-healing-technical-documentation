@@ -14,3 +14,8 @@ class GitProviderGateway(ABC):
     ) -> str:
         """Pushes documentation updates and creates a Pull Request. Returns PR URL."""
         pass
+
+    @abstractmethod
+    def get_chunk_diff(self, diff_text: str, filepath: str, start_line: int, end_line: int) -> str:
+        """Extracts unified diff edits related to a code chunk boundary range."""
+        pass

@@ -19,3 +19,8 @@ class LlmGateway(ABC):
     def check_semantic_link(self, code: CodeChunk, doc: DocSection) -> bool:
         """Asks the LLM to classify if the code and documentation section are semantically linked."""
         pass
+
+    @abstractmethod
+    def is_change_meaningful(self, chunk_name: str, diff_text: str) -> bool:
+        """Determines if the given code chunk diff constitutes a meaningful change that affects docs."""
+        pass

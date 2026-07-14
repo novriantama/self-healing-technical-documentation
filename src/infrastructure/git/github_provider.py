@@ -3,7 +3,9 @@ from typing import Dict, Set
 import whatthepatch
 from github import Github
 
+# pyrefly: ignore [missing-import]
 from src.domain.exceptions import GitError
+# pyrefly: ignore [missing-import]
 from src.interfaces.gateways.git_provider import GitProviderGateway
 
 
@@ -49,3 +51,28 @@ class GitHubProvider(GitProviderGateway):
             return pr.html_url
         except Exception as e:
             raise GitError(f"Failed to create pull request via GitHub API: {e}") from e
+
+    def get_chunk_diff(self, diff_text: str, filepath: str, start_line: int, end_line: int) -> str:
+        try:
+            chunk_changes = []
+            for diff in whatthepatch.parse_patch(diff_text):
+                if not diff.header or not diff.changes:
+                    continue
+                if diff.header.new_path != filepath and diff.header.old_path != filepath:
+                    continue
+
+                current_new_line = 1
+                for change in diff.changes:
+                    if change.new is not None:
+                        current_new_line = change.new
+
+                    if change.new is not None and start_line <= change.new <= end_line:
+                        if change.old is None:
+                            chunk_changes.append(f"+ {change.line}")
+                        else:
+                            chunk_changes.append(f"  {change.line}")
+                    elif change.new is None and change.old is not None and start_line <= current_new_line <= end_line:
+                        chunk_changes.append(f"- {change.line}")
+            return "\n".join(chunk_changes)
+        except Exception as e:
+            raise GitError(f"Failed to get chunk diff: {e}") from e

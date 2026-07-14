@@ -53,3 +53,19 @@ class AnthropicLlmClient(LlmGateway):
             return False
         except Exception as e:
             raise LlmClientError(f"Anthropic API request failed: {e}") from e
+
+    def is_change_meaningful(self, chunk_name: str, diff_text: str) -> bool:
+        if not self._api_key or self._api_key == "mock" or self._api_key == "mock-anthropic-key":
+            # Filter comments & whitespace from changes
+            lines = [line.strip() for line in diff_text.splitlines() if line.startswith("+") or line.startswith("-")]
+            if not lines:
+                return False
+            only_comments_or_whitespace = all(
+                line[1:].strip().startswith("#") or not line[1:].strip() for line in lines
+            )
+            return not only_comments_or_whitespace
+        try:
+            # Claude Sonnet 4.6 classification logic placeholder
+            return True
+        except Exception as e:
+            raise LlmClientError(f"Anthropic API request failed: {e}") from e
