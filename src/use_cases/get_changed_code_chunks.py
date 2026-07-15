@@ -45,6 +45,9 @@ class GetChangedCodeChunksUseCase:
             all_chunks = self._code_parser.parse_file(full_path)
 
             for chunk in all_chunks:
+                # Normalize chunk.id to relative filepath
+                if "::" in chunk.id:
+                    chunk.id = f"{filepath}::{chunk.id.split('::', 1)[1]}"
                 chunk_range = set(range(chunk.start_line, chunk.end_line + 1))
                 if chunk_range.intersection(modified_lines):
                     # Fetch specific chunk diff

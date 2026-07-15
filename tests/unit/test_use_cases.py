@@ -91,7 +91,7 @@ class MockGitProvider(GitProviderGateway):
     def get_modified_lines(self, diff_text: str) -> dict:
         if diff_text == "test_file_diff":
             return {"tests/test_math.py": {3, 4}}
-        return {"math.py": {3, 4}}
+        return {"src/math.py": {3, 4}}
 
     def create_pull_request(
         self, repo_name: str, branch_name: str, file_path: str, updated_content: str, pr_title: str, pr_body: str
@@ -135,7 +135,8 @@ def test_get_changed_code_chunks():
     use_case = GetChangedCodeChunksUseCase(git_provider, code_parser, llm_client)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        with open(os.path.join(tmpdir, "math.py"), "w") as f:
+        os.makedirs(os.path.join(tmpdir, "src"), exist_ok=True)
+        with open(os.path.join(tmpdir, "src/math.py"), "w") as f:
             f.write("# dummy code")
 
         changed = use_case.execute("meaningful_diff", tmpdir)
@@ -152,7 +153,8 @@ def test_get_changed_code_chunks_filters_comments_and_whitespace():
     use_case = GetChangedCodeChunksUseCase(git_provider, code_parser, llm_client)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        with open(os.path.join(tmpdir, "math.py"), "w") as f:
+        os.makedirs(os.path.join(tmpdir, "src"), exist_ok=True)
+        with open(os.path.join(tmpdir, "src/math.py"), "w") as f:
             f.write("# dummy code")
 
         # Comment-only diff

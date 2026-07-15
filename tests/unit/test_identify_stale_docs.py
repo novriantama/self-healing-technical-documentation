@@ -51,7 +51,7 @@ class MockCodeParser(CodeParserGateway):
 
 class MockGitProvider(GitProviderGateway):
     def get_modified_lines(self, diff_text: str) -> dict:
-        return {"math.py": {3, 8}}
+        return {"src/math.py": {3, 8}}
 
     def create_pull_request(self, *args, **kwargs) -> str:
         return "http://localhost/mock-pr-url"
@@ -89,8 +89,9 @@ def test_identify_stale_docs():
     use_case = IdentifyStaleDocsUseCase(get_changed_chunks, index_store)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Create math.py
-        with open(os.path.join(tmpdir, "math.py"), "w") as f:
+        # Create src/math.py
+        os.makedirs(os.path.join(tmpdir, "src"), exist_ok=True)
+        with open(os.path.join(tmpdir, "src/math.py"), "w") as f:
             f.write("# dummy")
 
         # Create mock index file

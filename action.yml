@@ -1,0 +1,34 @@
+name: 'Self-Healing Technical Documentation'
+description: 'Automatically detects stale documentation sections when code changes and repairs them.'
+author: 'Antigravity'
+branding:
+  icon: 'edit'
+  color: 'blue'
+inputs:
+  llm_api_key:
+    description: 'Anthropic API key for Claude Sonnet 4.6 verification and repair'
+    required: true
+  confidence_threshold:
+    description: 'Confidence threshold below which edits will be flagged for human review (draft mode)'
+    required: false
+    default: '0.8'
+  auto_merge:
+    description: 'Whether to auto-apply high-confidence corrections directly to the branch (true/false)'
+    required: false
+    default: 'true'
+  index_path:
+    description: 'Path to codebase-to-docs link graph index json file'
+    required: false
+    default: 'docs_index.json'
+  workspace_dir:
+    description: 'Target workspace directory containing source code and documentation'
+    required: false
+    default: '.'
+outputs:
+  stale_sections:
+    description: 'JSON list of stale documentation section heading paths found'
+  corrections:
+    description: 'JSON list of corrected documentation patches generated'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
