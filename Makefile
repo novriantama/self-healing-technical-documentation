@@ -1,3 +1,15 @@
+ifneq (,$(wildcard .env))
+    include .env
+    export
+endif
+
+# Map env variables to Action inputs
+export INPUT_LLM_API_KEY ?= $(subst ",,$(subst ',,$(ANTHROPIC_API_KEY)))
+export INPUT_CONFIDENCE_THRESHOLD ?= $(CONFIDENCE_THRESHOLD)
+export INPUT_AUTO_MERGE ?= $(AUTO_MERGE)
+export INPUT_INDEX_PATH ?= $(INDEX_PATH)
+export INPUT_WORKSPACE_DIR ?= $(WORKSPACE_DIR)
+
 .PHONY: help venv install test lint format clean run
 
 VENV = .venv
@@ -66,4 +78,9 @@ run:
 		echo "Python virtual environment not found. Please run 'make install' first."; \
 		exit 1; \
 	fi
-	$(PYTHON) src/main.py
+	@if [ -z "$(INPUT_LLM_API_KEY)" ]; then \
+		echo "Error: ANTHROPIC_API_KEY or INPUT_LLM_API_KEY environment variable is required to run the tool."; \
+		echo "Usage: Create a .env file with ANTHROPIC_API_KEY='key' OR run 'INPUT_LLM_API_KEY=key make run'"; \
+		exit 1; \
+	fi
+	$(PYTHON) main.py
