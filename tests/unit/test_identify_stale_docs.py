@@ -61,6 +61,9 @@ class MockGitProvider(GitProviderGateway):
             return "+ return price * 0.1"
         return "+ return balance * 0.05"
 
+    def add_pr_comment(self, repo_name: str, pr_number: int, comment: str) -> None:
+        pass
+
 
 class MockLlmClient(LlmGateway):
     def verify_accuracy(self, old_code, new_code, doc) -> VerificationResult:

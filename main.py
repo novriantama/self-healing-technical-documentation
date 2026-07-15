@@ -28,6 +28,9 @@ from src.use_cases.get_changed_code_chunks import GetChangedCodeChunksUseCase
 from src.use_cases.identify_stale_docs import IdentifyStaleDocsUseCase
 
 # pyrefly: ignore [missing-import]
+from src.use_cases.run_pr_workflow import RunPrWorkflowUseCase
+
+# pyrefly: ignore [missing-import]
 from src.use_cases.validate_corrections import ValidateCorrectionsUseCase
 
 # pyrefly: ignore [missing-import]
@@ -130,6 +133,24 @@ def main():
                     print(f"Auto-applied patch to {patch.filepath} ({patch.heading_path})")
                 else:
                     print(f"Warning: original content mismatch in {patch.filepath}")
+
+    # 7. Run PR workflow
+    repo_name = os.environ.get("GITHUB_REPOSITORY", "owner/repo")
+    pr_number = 0
+    event_path = os.environ.get("GITHUB_EVENT_PATH")
+    if event_path and os.path.exists(event_path):
+        try:
+            with open(event_path, "r") as f:
+                event = json.load(f)
+            pr_data = event.get("pull_request")
+            if pr_data:
+                pr_number = pr_data.get("number", 0)
+        except Exception as e:
+            print(f"Warning: Failed to parse GITHUB_EVENT_PATH: {e}")
+
+    print("Running PR workflow...")
+    run_pr_workflow = RunPrWorkflowUseCase(git_provider)
+    run_pr_workflow.execute(valid_patches, verified_stale, repo_name, pr_number)
 
     # 7. Write outputs to environment
     github_output = os.environ.get("GITHUB_OUTPUT")

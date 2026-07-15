@@ -19,3 +19,8 @@ class GitProviderGateway(ABC):
     def get_chunk_diff(self, diff_text: str, filepath: str, start_line: int, end_line: int) -> str:
         """Extracts unified diff edits related to a code chunk boundary range."""
         pass
+
+    @abstractmethod
+    def add_pr_comment(self, repo_name: str, pr_number: int, comment: str) -> None:
+        """Adds a comment to a Pull Request on GitHub."""
+        pass

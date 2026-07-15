@@ -105,6 +105,9 @@ class MockGitProvider(GitProviderGateway):
             return "+ \n-    "
         return "+ return price * 0.1\n- return price * 0.05"
 
+    def add_pr_comment(self, repo_name: str, pr_number: int, comment: str) -> None:
+        pass
+
 
 def test_index_codebase_linking():
     use_case = IndexCodebaseUseCase(

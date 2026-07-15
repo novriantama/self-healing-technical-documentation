@@ -44,6 +44,9 @@ class MockGitProvider(GitProviderGateway):
             return "- def calculate_tax(old_price: float)\n+ def calculate_tax(new_price: float)"
         return "- return price * 0.1\n+ return price * 0.15"
 
+    def add_pr_comment(self, repo_name: str, pr_number: int, comment: str) -> None:
+        pass
+
 
 def test_verify_stale_docs_use_case():
     git_provider = MockGitProvider()

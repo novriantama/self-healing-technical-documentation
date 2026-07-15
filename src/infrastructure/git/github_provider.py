@@ -77,3 +77,14 @@ class GitHubProvider(GitProviderGateway):
             return "\n".join(chunk_changes)
         except Exception as e:
             raise GitError(f"Failed to get chunk diff: {e}") from e
+
+    def add_pr_comment(self, repo_name: str, pr_number: int, comment: str) -> None:
+        if not self._github or self._token == "mock":
+            print(f"Mock adding PR comment to PR #{pr_number} in repo {repo_name}: {comment}")
+            return
+        try:
+            repo = self._github.get_repo(repo_name)
+            pr = repo.get_pull(pr_number)
+            pr.create_issue_comment(comment)
+        except Exception as e:
+            raise GitError(f"Failed to add PR comment via GitHub API: {e}") from e
