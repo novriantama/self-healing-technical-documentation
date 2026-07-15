@@ -12,9 +12,10 @@ from src.interfaces.gateways.llm import LlmGateway
 
 
 class GenerateCorrectionsUseCase:
-    def __init__(self, doc_parser: DocParserGateway, llm_client: LlmGateway):
+    def __init__(self, doc_parser: DocParserGateway, llm_client: LlmGateway, confidence_threshold: float = 0.8):
         self._doc_parser = doc_parser
         self._llm_client = llm_client
+        self._confidence_threshold = confidence_threshold
 
     def execute(
         self,
@@ -58,6 +59,16 @@ class GenerateCorrectionsUseCase:
                 total_confidence = min(total_confidence, res.confidence)
 
             if repaired_content != original_doc.content:
+                # Mode selection based on LLM confidence level
+                mode = "auto_fix"
+                if total_confidence < self._confidence_threshold:
+                    mode = "draft"
+                    todo_marker = (
+                        "<!-- TODO: HUMAN REVIEW REQUIRED - Low confidence correction "
+                        f"({total_confidence:.2f}). Please review the changes below. -->\n\n"
+                    )
+                    repaired_content = todo_marker + repaired_content
+
                 patches.append(
                     DocPatch(
                         filepath=filepath,
@@ -65,6 +76,7 @@ class GenerateCorrectionsUseCase:
                         original_content=original_doc.content,
                         repaired_content=repaired_content,
                         confidence=total_confidence,
+                        mode=mode,
                     )
                 )
 

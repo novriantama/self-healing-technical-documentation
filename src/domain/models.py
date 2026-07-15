@@ -31,3 +31,4 @@ class DocPatch(BaseModel):
     original_content: str = Field(..., description="Current doc section content")
     repaired_content: str = Field(..., description="Repaired doc section content")
     confidence: float = Field(..., description="Confidence rating from generator")
+    mode: str = Field("auto_fix", description="Correction mode (auto_fix or draft)")
