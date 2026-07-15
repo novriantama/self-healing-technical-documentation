@@ -15,6 +15,7 @@ class RunPrWorkflowUseCase:
 
     def execute(
         self,
+        suspects: Dict[str, List[CodeChunk]],
         valid_patches: List[DocPatch],
         verified_stale: Dict[str, List[Tuple[CodeChunk, VerificationResult]]],
         repo_name: str,
@@ -23,7 +24,7 @@ class RunPrWorkflowUseCase:
         """
         Runs the PR workflow:
         1. High-confidence fixes: creates branches and opens PRs.
-        2. Low-confidence flags: adds a review comment to the original PR.
+        2. Posts a consolidated summary comment on the original PR.
         Returns a list of URLs created (PR URLs).
         """
         pr_urls: List[str] = []
@@ -66,28 +67,54 @@ class RunPrWorkflowUseCase:
             )
             pr_urls.append(pr_url)
 
-        # 3. Process low-confidence drafts
-        if drafts and pr_number > 0:
-            comment_lines = [
-                "### ⚠️ Self-Healing Docs: Human Review Required",
-                "",
-                "The following documentation sections have been flagged as potentially stale based on recent codebase changes. "
-                "The LLM confidence level was low, so please review them manually:",
-                "",
-            ]
+        # 3. Post consolidated summary comment on the original PR
+        if pr_number > 0:
+            # Verified accurate are suspects that were not found verified stale
+            num_accurate = len(suspects) - len(verified_stale)
+            if num_accurate < 0:
+                num_accurate = 0
+
+            # Formulate the auto-fixed link indicators e.g., (see PR #42)
+            auto_fixed_details = []
+            for url in pr_urls:
+                pr_id = url.split("/")[-1]
+                auto_fixed_details.append(f"(see PR #{pr_id})")
+            auto_fixed_str = " ".join(auto_fixed_details)
+            if auto_fixed_str:
+                auto_fixed_str = f" {auto_fixed_str}"
+
+            # Build list of opened pull requests markdown section
+            auto_fixed_links_lines = []
+            for url in pr_urls:
+                auto_fixed_links_lines.append(f"- [PR #{url.split('/')[-1]}]({url})")
+            auto_fixed_links = "\n".join(auto_fixed_links_lines) if auto_fixed_links_lines else "None"
+
+            # Build list of flagged sections markdown section
+            flagged_links_lines = []
             for patch in drafts:
-                # Find matching staleness diagnosis
                 explanation = "Documentation references outdated codebase elements."
                 for heading, issues in verified_stale.items():
                     if heading == patch.heading_path:
                         if issues:
                             explanation = issues[0][1].explanation
                         break
-
                 doc_link = f"https://github.com/{repo_name}/blob/main/{patch.filepath}"
-                comment_lines.append(f"- [ ] **{patch.heading_path}** ([link]({doc_link}))\n  *Reason*: {explanation}")
+                flagged_links_lines.append(
+                    f"- **{patch.heading_path}** ([link]({doc_link}))\n  *Reason*: {explanation}"
+                )
+            flagged_links = "\n".join(flagged_links_lines) if flagged_links_lines else "None"
 
-            comment_body = "\n".join(comment_lines)
+            # Consolidate comment body
+            comment_body = (
+                "### 📝 Self-Healing Docs: Check Results\n\n"
+                f"**Doc Check Results**: {num_accurate} sections verified accurate, {len(auto_fixes)} auto-fixed{auto_fixed_str}, {len(drafts)} flagged for review.\n\n"
+                "---\n\n"
+                "#### 🔧 Auto-fixed Pull Requests:\n"
+                f"{auto_fixed_links}\n\n"
+                "#### ⚠️ Flagged for Manual Review:\n"
+                f"{flagged_links}"
+            )
+
             self._git_provider.add_pr_comment(repo_name=repo_name, pr_number=pr_number, comment=comment_body)
 
         return pr_urls

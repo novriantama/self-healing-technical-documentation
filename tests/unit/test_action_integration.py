@@ -1,4 +1,5 @@
 # pyrefly: ignore [missing-import]
+import json
 import os
 import tempfile
 
@@ -52,6 +53,13 @@ def test_action_integration_flow(monkeypatch):
         # Mock GITHUB_OUTPUT file
         output_file = os.path.join(tmpdir, "github_output.txt")
         monkeypatch.setenv("GITHUB_OUTPUT", output_file)
+
+        # Mock GITHUB_EVENT_PATH and repository details
+        event_file = os.path.join(tmpdir, "event.json")
+        with open(event_file, "w") as f:
+            json.dump({"pull_request": {"number": 42}}, f)
+        monkeypatch.setenv("GITHUB_EVENT_PATH", event_file)
+        monkeypatch.setenv("GITHUB_REPOSITORY", "owner/repo")
 
         # 6. Run action entrypoint main()
         main.main()

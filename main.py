@@ -150,7 +150,7 @@ def main():
 
     print("Running PR workflow...")
     run_pr_workflow = RunPrWorkflowUseCase(git_provider)
-    run_pr_workflow.execute(valid_patches, verified_stale, repo_name, pr_number)
+    run_pr_workflow.execute(suspects, valid_patches, verified_stale, repo_name, pr_number)
 
     # 7. Write outputs to environment
     github_output = os.environ.get("GITHUB_OUTPUT")

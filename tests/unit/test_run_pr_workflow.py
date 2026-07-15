@@ -79,7 +79,13 @@ def test_run_pr_workflow_use_case():
         patch_auto.filepath = doc_filepath
         patch_draft.filepath = doc_filepath
 
+        suspects = {
+            "Finance > Tax Calculation": [chunk_stale],
+            "Finance > Billing Details": [],
+        }
+
         pr_urls = use_case.execute(
+            suspects=suspects,
             valid_patches=[patch_auto, patch_draft],
             verified_stale=verified_stale,
             repo_name="owner/repo",
@@ -95,9 +101,16 @@ def test_run_pr_workflow_use_case():
         assert git_provider.prs_created[0][2] == doc_filepath
         assert "Explain how to compute tax using the system." in git_provider.prs_created[0][3]
 
-        # Low confidence draft should post a comment
+        # Consolidate comment checks
         assert len(git_provider.comments_added) == 1
         assert git_provider.comments_added[0][0] == "owner/repo"
         assert git_provider.comments_added[0][1] == 123
-        assert "⚠️ Self-Healing Docs: Human Review Required" in git_provider.comments_added[0][2]
-        assert "Finance > Billing Details" in git_provider.comments_added[0][2]
+        comment_content = git_provider.comments_added[0][2]
+
+        # Verify the summary formatting precisely
+        assert (
+            "Doc Check Results**: 1 sections verified accurate, 1 auto-fixed (see PR #999), 1 flagged for review."
+            in comment_content
+        )
+        assert "Finance > Billing Details" in comment_content
+        assert "https://github.com/owner/repo/blob/main/" in comment_content
