@@ -37,27 +37,53 @@ from src.use_cases.validate_corrections import ValidateCorrectionsUseCase
 from src.use_cases.verify_stale_docs import VerifyStaleDocsUseCase
 
 
-def get_git_diff() -> str:
+def get_git_diff(cwd: str = ".") -> str:
     """Retrieves the unified git diff text for the changed files."""
-    # Check GITHUB_BASE_REF for PR base branches
     base_ref = os.environ.get("GITHUB_BASE_REF")
+    print(f"DEBUG: GITHUB_BASE_REF={base_ref}")
+
+    # Fallback 1: GitHub PR merge commit diff against first parent
+    res = subprocess.run(["git", "diff", "HEAD^1", "HEAD"], capture_output=True, text=True, cwd=cwd)
+    if res.returncode == 0 and res.stdout.strip():
+        print("DEBUG: Successfully fetched diff using HEAD^1...HEAD merge base fallback.")
+        return res.stdout
+
     if base_ref:
-        subprocess.run(["git", "fetch", "origin", base_ref], capture_output=True)
-        res = subprocess.run(["git", "diff", f"origin/{base_ref}...HEAD"], capture_output=True, text=True)
+        print(f"DEBUG: Fetching origin {base_ref}...")
+        subprocess.run(["git", "fetch", "origin", base_ref], capture_output=True, cwd=cwd)
+
+        # Try 3-dot diff (ancestor)
+        res = subprocess.run(["git", "diff", f"origin/{base_ref}...HEAD"], capture_output=True, text=True, cwd=cwd)
         if res.returncode == 0 and res.stdout.strip():
             return res.stdout
 
-    # Fallback to origin/main
-    subprocess.run(["git", "fetch", "origin", "main"], capture_output=True)
-    res = subprocess.run(["git", "diff", "origin/main...HEAD"], capture_output=True, text=True)
+        # Try 2-dot diff (direct)
+        res = subprocess.run(["git", "diff", f"origin/{base_ref}", "HEAD"], capture_output=True, text=True, cwd=cwd)
+        if res.returncode == 0 and res.stdout.strip():
+            return res.stdout
+
+    # Fallback 2: origin/main
+    print("DEBUG: Fetching origin main...")
+    subprocess.run(["git", "fetch", "origin", "main"], capture_output=True, cwd=cwd)
+    res = subprocess.run(["git", "diff", "origin/main...HEAD"], capture_output=True, text=True, cwd=cwd)
     if res.returncode == 0 and res.stdout.strip():
         return res.stdout
 
-    # Local fallback
-    res = subprocess.run(["git", "diff", "HEAD~1"], capture_output=True, text=True)
+    res = subprocess.run(["git", "diff", "origin/main", "HEAD"], capture_output=True, text=True, cwd=cwd)
     if res.returncode == 0 and res.stdout.strip():
         return res.stdout
 
+    # Fallback 3: Local parent commit fallback
+    res = subprocess.run(["git", "diff", "HEAD~1"], capture_output=True, text=True, cwd=cwd)
+    if res.returncode == 0 and res.stdout.strip():
+        return res.stdout
+
+    # Fallback 4: Uncommitted changes fallback
+    res = subprocess.run(["git", "diff"], capture_output=True, text=True, cwd=cwd)
+    if res.returncode == 0 and res.stdout.strip():
+        return res.stdout
+
+    print("DEBUG: No git changes detected by any diff commands.")
     return ""
 
 
@@ -81,7 +107,7 @@ def main():
     workspace_dir = os.environ.get("INPUT_WORKSPACE_DIR", ".")
 
     # 2. Extract git diff
-    diff_text = get_git_diff()
+    diff_text = get_git_diff(workspace_dir)
     if not diff_text.strip():
         print("No code changes detected. Exiting gracefully.")
         # Setup empty outputs

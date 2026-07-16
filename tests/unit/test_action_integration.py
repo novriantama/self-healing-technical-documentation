@@ -41,7 +41,7 @@ def test_action_integration_flow(monkeypatch):
             '     """Compute tax value."""\n'
             "     return new_price * 0.1\n"
         )
-        monkeypatch.setattr(main, "get_git_diff", lambda: diff_content)
+        monkeypatch.setattr(main, "get_git_diff", lambda *args, **kwargs: diff_content)
 
         # 5. Configure GitHub Action environment variables
         monkeypatch.setenv("INPUT_LLM_API_KEY", "mock")
