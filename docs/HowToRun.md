@@ -19,7 +19,7 @@ make install
 ### Running Checks
 Set your Anthropic key and run the script:
 ```bash
-INPUT_LLM_API_KEY="your-anthropic-key" make run
+make run
 ```
 
 ### Running Tests and Linters

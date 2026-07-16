@@ -4,13 +4,14 @@ ifneq (,$(wildcard .env))
 endif
 
 # Map env variables to Action inputs
-export INPUT_LLM_API_KEY ?= $(subst ",,$(subst ',,$(ANTHROPIC_API_KEY)))
+export INPUT_LLM_API_KEY ?= $(subst ",,$(subst ',,$(if $(ANTHROPIC_API_KEY),$(ANTHROPIC_API_KEY),$(OPENAGENTIC_API_KEY))))
 export INPUT_CONFIDENCE_THRESHOLD ?= $(CONFIDENCE_THRESHOLD)
 export INPUT_AUTO_MERGE ?= $(AUTO_MERGE)
 export INPUT_INDEX_PATH ?= $(INDEX_PATH)
 export INPUT_WORKSPACE_DIR ?= $(WORKSPACE_DIR)
 
-.PHONY: help venv install test lint format clean run
+.PHONY: help venv install test lint format clean run index
+
 
 VENV = .venv
 PYTHON = $(VENV)/bin/python3
@@ -84,3 +85,16 @@ run:
 		exit 1; \
 	fi
 	$(PYTHON) main.py
+
+index:
+	@if [ ! -f "$(PYTHON)" ]; then \
+		echo "Python virtual environment not found. Please run 'make install' first."; \
+		exit 1; \
+	fi
+	@if [ -z "$(INPUT_LLM_API_KEY)" ]; then \
+		echo "Error: ANTHROPIC_API_KEY or INPUT_LLM_API_KEY environment variable is required to run the indexer."; \
+		echo "Usage: Create a .env file with ANTHROPIC_API_KEY='key' OR run 'INPUT_LLM_API_KEY=key make index'"; \
+		exit 1; \
+	fi
+	$(PYTHON) index.py
+
