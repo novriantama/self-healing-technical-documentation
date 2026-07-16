@@ -31,13 +31,56 @@ class AnthropicLlmClient(LlmGateway):
 
         self._anthropic_client = None
 
-        if api_key and api_key != "mock" and api_key != "mock-anthropic-key":
-            base_url = None
-            if self._is_openagentic:
-                base_url = os.environ.get("OPENAGENTIC_BASE_URL", "https://openagentic.id/api/v1")
-            self._anthropic_client = Anthropic(api_key=api_key, base_url=base_url)
+        if api_key and api_key != "mock" and api_key != "mock-anthropic-key" and not self._is_openagentic:
+            self._anthropic_client = Anthropic(api_key=api_key)
 
     def _call_llm(self, prompt: str) -> str:
+        if self._is_openagentic:
+            import time
+
+            import httpx
+
+            base_url = os.environ.get("OPENAGENTIC_BASE_URL", "https://openagentic.id/api/v1")
+            url = f"{base_url}/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {self._api_key}",
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "model": self._model,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.0,
+            }
+
+            max_retries = 5
+            backoff_factor = 2.0
+            delay = 1.0
+
+            for attempt in range(max_retries):
+                try:
+                    response = httpx.post(url, json=payload, headers=headers, timeout=60.0)
+                    if response.status_code == 429:
+                        print(f"Rate limit (429) hit. Retrying in {delay}s...")
+                        time.sleep(delay)
+                        delay *= backoff_factor
+                        continue
+                    response.raise_for_status()
+                    res_text = response.text.strip()
+                    if "data: [DONE]" in res_text:
+                        res_text = res_text.split("data: [DONE]")[0].strip()
+                    data = json.loads(res_text)
+
+                    # Proactive small delay to prevent rapid consecutive hits
+                    time.sleep(0.5)
+                    return data["choices"][0]["message"]["content"].strip()
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        raise LlmClientError(
+                            f"OpenAgentic HTTP request failed after {max_retries} attempts: {e}"
+                        ) from e
+                    time.sleep(delay)
+                    delay *= backoff_factor
+            raise LlmClientError(f"OpenAgentic HTTP request failed after {max_retries} attempts.")
         if self._anthropic_client:
             response = self._anthropic_client.messages.create(
                 model=self._model,

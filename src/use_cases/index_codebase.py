@@ -20,7 +20,7 @@ class IndexCodebaseUseCase:
         self._doc_parser = doc_parser
         self._llm_client = llm_client
 
-    def execute(self, root_dir: str) -> Dict[str, List[str]]:
+    def execute(self, root_dir: str, use_llm: bool = True) -> Dict[str, List[str]]:
         # 1. Discover and parse code files (.py)
         code_chunks: List[CodeChunk] = []
         for dirpath, _, filenames in os.walk(root_dir):
@@ -54,13 +54,41 @@ class IndexCodebaseUseCase:
             for sec in doc_sections:
                 linked = False
 
-                # A. Heuristic match: check if name candidates intersect with doc section references
-                if any(cand in sec.references for cand in name_candidates):
+                # A. Heuristic match: check if name candidates intersect with doc section references (case-insensitive)
+                sec_refs_lower = {ref.lower() for ref in sec.references}
+                if any(cand.lower() in sec_refs_lower for cand in name_candidates):
                     link_graph[chunk.id].add(sec.heading_path)
                     linked = True
 
                 # B. Claude Sonnet 4.6 semantic evaluation (fallback)
-                if not linked and self._llm_client.check_semantic_link(chunk, sec):
-                    link_graph[chunk.id].add(sec.heading_path)
+                if not linked and use_llm:
+                    # Pre-filter: only check LLM if there is some case-insensitive lexical overlap
+                    chunk_tokens = set(chunk.name.lower().replace("_", ".").split("."))
+                    ignore_tokens = {
+                        "get",
+                        "list",
+                        "create",
+                        "update",
+                        "delete",
+                        "app",
+                        "v1",
+                        "api",
+                        "route",
+                        "router",
+                        "endpoint",
+                        "post",
+                        "put",
+                        "patch",
+                    }
+                    filtered_tokens = chunk_tokens - ignore_tokens
+
+                    has_overlap = True
+                    if filtered_tokens:
+                        content_lower = sec.content.lower()
+                        heading_lower = sec.heading_path.lower()
+                        has_overlap = any(tok in content_lower or tok in heading_lower for tok in filtered_tokens)
+
+                    if has_overlap and self._llm_client.check_semantic_link(chunk, sec):
+                        link_graph[chunk.id].add(sec.heading_path)
 
         return {code_id: sorted(paths) for code_id, paths in link_graph.items() if paths}

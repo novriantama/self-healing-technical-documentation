@@ -19,7 +19,7 @@ def test_index_script_main(monkeypatch):
             def __init__(self, *args, **kwargs):
                 pass
 
-            def execute(self, workspace_dir):
+            def execute(self, workspace_dir, *args, **kwargs):
                 return {"test.py::func": ["Doc > Sec"]}
 
         # Mock JsonIndexStore

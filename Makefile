@@ -3,12 +3,16 @@ ifneq (,$(wildcard .env))
     export
 endif
 
+export OPENAGENTIC_BASE_URL := $(subst ",,$(subst ',,$(OPENAGENTIC_BASE_URL)))
+export OPENAGENTIC_MODEL := $(subst ",,$(subst ',,$(OPENAGENTIC_MODEL)))
+export OPENAGENTIC_API_KEY := $(subst ",,$(subst ',,$(OPENAGENTIC_API_KEY)))
+
 # Map env variables to Action inputs
 export INPUT_LLM_API_KEY ?= $(subst ",,$(subst ',,$(if $(ANTHROPIC_API_KEY),$(ANTHROPIC_API_KEY),$(OPENAGENTIC_API_KEY))))
-export INPUT_CONFIDENCE_THRESHOLD ?= $(CONFIDENCE_THRESHOLD)
-export INPUT_AUTO_MERGE ?= $(AUTO_MERGE)
-export INPUT_INDEX_PATH ?= $(INDEX_PATH)
-export INPUT_WORKSPACE_DIR ?= $(WORKSPACE_DIR)
+export INPUT_CONFIDENCE_THRESHOLD ?= $(subst ",,$(subst ',,$(CONFIDENCE_THRESHOLD)))
+export INPUT_AUTO_MERGE ?= $(subst ",,$(subst ',,$(AUTO_MERGE)))
+export INPUT_INDEX_PATH ?= $(subst ",,$(subst ',,$(INDEX_PATH)))
+export INPUT_WORKSPACE_DIR ?= $(subst ",,$(subst ',,$(WORKSPACE_DIR)))
 
 .PHONY: help venv install test lint format clean run index
 
