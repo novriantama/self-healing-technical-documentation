@@ -29,9 +29,11 @@ class IdentifyStaleDocsUseCase:
         """
         # 1. Get meaningful changed code chunks
         changed_chunks = self._get_changed_chunks_use_case.execute(diff_text, workspace_dir)
+        print(f"DEBUG: changed_chunks = {[c.id for c in changed_chunks]}")
 
         # 2. Load codebase-to-docs link graph
         graph = self._index_store.load(index_path)
+        print(f"DEBUG: loaded index graph keys = {list(graph.keys())}")
 
         # 3. Identify affected doc sections (suspects)
         suspects: Dict[str, List[CodeChunk]] = {}
@@ -41,5 +43,7 @@ class IdentifyStaleDocsUseCase:
                     if heading_path not in suspects:
                         suspects[heading_path] = []
                     suspects[heading_path].append(chunk)
+            else:
+                print(f"DEBUG: Chunk ID {chunk.id} NOT found in graph keys.")
 
         return suspects
