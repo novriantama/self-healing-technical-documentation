@@ -42,44 +42,76 @@ def get_git_diff(cwd: str = ".") -> str:
     base_ref = os.environ.get("GITHUB_BASE_REF")
     print(f"DEBUG: GITHUB_BASE_REF={base_ref}")
 
+    # Debug current git state
+    print(f"DEBUG: Checking git status in {cwd}:")
+    subprocess.run(["git", "status"], cwd=cwd)
+    print("DEBUG: Checking current git HEAD commit:")
+    subprocess.run(["git", "rev-parse", "HEAD"], cwd=cwd)
+    print("DEBUG: Checking git remote configuration:")
+    subprocess.run(["git", "remote", "-v"], cwd=cwd)
+
     # Fallback 1: GitHub PR merge commit diff against first parent
     res = subprocess.run(["git", "diff", "HEAD^1", "HEAD"], capture_output=True, text=True, cwd=cwd)
+    print(
+        f"DEBUG: Fallback 1 exit code: {res.returncode}, stdout length: {len(res.stdout)}, stderr: {res.stderr.strip()}"
+    )
     if res.returncode == 0 and res.stdout.strip():
         print("DEBUG: Successfully fetched diff using HEAD^1...HEAD merge base fallback.")
         return res.stdout
 
     if base_ref:
         print(f"DEBUG: Fetching origin {base_ref}...")
-        subprocess.run(["git", "fetch", "origin", base_ref], capture_output=True, cwd=cwd)
+        fetch_res = subprocess.run(["git", "fetch", "origin", base_ref], capture_output=True, text=True, cwd=cwd)
+        print(f"DEBUG: Fetch origin exit code: {fetch_res.returncode}, stderr: {fetch_res.stderr.strip()}")
 
         # Try 3-dot diff (ancestor)
         res = subprocess.run(["git", "diff", f"origin/{base_ref}...HEAD"], capture_output=True, text=True, cwd=cwd)
+        print(
+            f"DEBUG: 3-dot diff exit code: {res.returncode}, stdout length: {len(res.stdout)}, stderr: {res.stderr.strip()}"
+        )
         if res.returncode == 0 and res.stdout.strip():
             return res.stdout
 
         # Try 2-dot diff (direct)
         res = subprocess.run(["git", "diff", f"origin/{base_ref}", "HEAD"], capture_output=True, text=True, cwd=cwd)
+        print(
+            f"DEBUG: 2-dot diff exit code: {res.returncode}, stdout length: {len(res.stdout)}, stderr: {res.stderr.strip()}"
+        )
         if res.returncode == 0 and res.stdout.strip():
             return res.stdout
 
     # Fallback 2: origin/main
     print("DEBUG: Fetching origin main...")
-    subprocess.run(["git", "fetch", "origin", "main"], capture_output=True, cwd=cwd)
+    fetch_main_res = subprocess.run(["git", "fetch", "origin", "main"], capture_output=True, text=True, cwd=cwd)
+    print(f"DEBUG: Fetch origin main exit code: {fetch_main_res.returncode}, stderr: {fetch_main_res.stderr.strip()}")
+
     res = subprocess.run(["git", "diff", "origin/main...HEAD"], capture_output=True, text=True, cwd=cwd)
+    print(
+        f"DEBUG: origin/main 3-dot diff exit code: {res.returncode}, stdout length: {len(res.stdout)}, stderr: {res.stderr.strip()}"
+    )
     if res.returncode == 0 and res.stdout.strip():
         return res.stdout
 
     res = subprocess.run(["git", "diff", "origin/main", "HEAD"], capture_output=True, text=True, cwd=cwd)
+    print(
+        f"DEBUG: origin/main 2-dot diff exit code: {res.returncode}, stdout length: {len(res.stdout)}, stderr: {res.stderr.strip()}"
+    )
     if res.returncode == 0 and res.stdout.strip():
         return res.stdout
 
     # Fallback 3: Local parent commit fallback
     res = subprocess.run(["git", "diff", "HEAD~1"], capture_output=True, text=True, cwd=cwd)
+    print(
+        f"DEBUG: Fallback 3 (HEAD~1) exit code: {res.returncode}, stdout length: {len(res.stdout)}, stderr: {res.stderr.strip()}"
+    )
     if res.returncode == 0 and res.stdout.strip():
         return res.stdout
 
     # Fallback 4: Uncommitted changes fallback
     res = subprocess.run(["git", "diff"], capture_output=True, text=True, cwd=cwd)
+    print(
+        f"DEBUG: Fallback 4 (git diff) exit code: {res.returncode}, stdout length: {len(res.stdout)}, stderr: {res.stderr.strip()}"
+    )
     if res.returncode == 0 and res.stdout.strip():
         return res.stdout
 
