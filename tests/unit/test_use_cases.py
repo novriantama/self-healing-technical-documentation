@@ -122,10 +122,10 @@ def test_index_codebase_linking():
 
         links = use_case.execute(tmpdir)
 
-        assert "src/math.py::calculate_tax" in links
-        assert "src/math.py::unused_function" not in links
+        assert "math.py::calculate_tax" in links
+        assert "math.py::unused_function" not in links
 
-        tax_links = links["src/math.py::calculate_tax"]
+        tax_links = links["math.py::calculate_tax"]
         assert len(tax_links) == 2
         assert "Finance > Tax Calculation" in tax_links
         assert "Finance > Semantic Section" in tax_links

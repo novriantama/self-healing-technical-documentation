@@ -32,7 +32,12 @@ class IndexCodebaseUseCase:
             for fname in filenames:
                 if fname.endswith(".py") and not fname.startswith("test_"):
                     filepath = os.path.join(dirpath, fname)
-                    code_chunks.extend(self._code_parser.parse_file(filepath))
+                    chunks = self._code_parser.parse_file(filepath)
+                    for chunk in chunks:
+                        if "::" in chunk.id:
+                            rel_filepath = os.path.relpath(filepath, root_dir)
+                            chunk.id = f"{rel_filepath}::{chunk.id.split('::', 1)[1]}"
+                    code_chunks.extend(chunks)
 
         # 2. Discover and parse markdown doc files (.md)
         doc_sections: List[DocSection] = []
