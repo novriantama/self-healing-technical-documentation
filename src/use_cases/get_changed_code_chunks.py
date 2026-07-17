@@ -27,6 +27,7 @@ class GetChangedCodeChunksUseCase:
         skipping test files and comment-only/whitespace-only changes.
         """
         modified_lines_map = self._git_provider.get_modified_lines(diff_text)
+        print(f"DEBUG: modified_lines_map files = {list(modified_lines_map.keys())}")
 
         changed_chunks: List[CodeChunk] = []
         for filepath, modified_lines in modified_lines_map.items():
@@ -40,9 +41,13 @@ class GetChangedCodeChunksUseCase:
 
             full_path = os.path.join(workspace_dir, filepath)
             if not os.path.exists(full_path):
+                print(f"DEBUG: File path {full_path} does not exist locally.")
                 continue
 
             all_chunks = self._code_parser.parse_file(full_path)
+            if "books.py" in filepath:
+                print(f"DEBUG: books.py modified lines = {modified_lines}")
+                print(f"DEBUG: books.py parsed chunks = {[(c.id, c.start_line, c.end_line) for c in all_chunks]}")
 
             for chunk in all_chunks:
                 # Normalize chunk.id to relative filepath
@@ -50,12 +55,17 @@ class GetChangedCodeChunksUseCase:
                     chunk.id = f"{filepath}::{chunk.id.split('::', 1)[1]}"
                 chunk_range = set(range(chunk.start_line, chunk.end_line + 1))
                 if chunk_range.intersection(modified_lines):
+                    if "books.py" in filepath:
+                        print(f"DEBUG: books.py chunk {chunk.id} overlaps modified lines.")
                     # Fetch specific chunk diff
                     chunk_diff = self._git_provider.get_chunk_diff(
                         diff_text, filepath, chunk.start_line, chunk.end_line
                     )
                     # Filter for meaningful changes
-                    if self._llm_client.is_change_meaningful(chunk.name, chunk_diff):
+                    meaningful = self._llm_client.is_change_meaningful(chunk.name, chunk_diff)
+                    if "books.py" in filepath:
+                        print(f"DEBUG: books.py chunk {chunk.id} meaningful = {meaningful}. Chunk diff = {chunk_diff}")
+                    if meaningful:
                         changed_chunks.append(chunk)
 
         return changed_chunks
