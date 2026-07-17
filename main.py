@@ -39,6 +39,9 @@ from src.use_cases.verify_stale_docs import VerifyStaleDocsUseCase
 
 def get_git_diff(cwd: str = ".") -> str:
     """Retrieves the unified git diff text for the changed files."""
+    # Resolve dubious ownership inside Docker Action runners
+    subprocess.run(["git", "config", "--global", "--add", "safe.directory", "*"], capture_output=True, cwd=cwd)
+
     base_ref = os.environ.get("GITHUB_BASE_REF")
     print(f"DEBUG: GITHUB_BASE_REF={base_ref}")
 
