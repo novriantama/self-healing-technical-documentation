@@ -147,6 +147,8 @@ class AstCodeParserVisitor(ast.NodeVisitor):
     def visit_ClassDef(self, node: ast.ClassDef):
         class_type = classify_class(node)
         start_line = node.lineno
+        if node.decorator_list:
+            start_line = node.decorator_list[0].lineno
         end_line = getattr(node, "end_lineno", start_line)
         docstring = ast.get_docstring(node) or ""
 
@@ -177,6 +179,8 @@ class AstCodeParserVisitor(ast.NodeVisitor):
     def _process_function(self, node: ast.AST):
         func_type = classify_function(node)
         start_line = node.lineno
+        if node.decorator_list:
+            start_line = node.decorator_list[0].lineno
         end_line = getattr(node, "end_lineno", start_line)
         docstring = ast.get_docstring(node) or ""
 
