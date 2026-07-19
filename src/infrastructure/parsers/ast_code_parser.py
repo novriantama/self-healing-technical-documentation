@@ -126,14 +126,21 @@ def get_function_signature(node: ast.AST) -> str:
     ret = f"{prefix} {node.name}({', '.join(args_list)})"
     if node.returns:
         ret += f" -> {ast.unparse(node.returns)}"
-    return ret
+
+    decorators = [f"@{ast.unparse(d)}" for d in node.decorator_list]
+    dec_prefix = "\n".join(decorators) + "\n" if decorators else ""
+    return dec_prefix + ret
 
 
 def get_class_signature(node: ast.ClassDef) -> str:
     """Reconstructs the class signature using ast.unparse."""
     bases = [ast.unparse(base) for base in node.bases]
     bases_str = f"({', '.join(bases)})" if bases else ""
-    return f"class {node.name}{bases_str}"
+    ret = f"class {node.name}{bases_str}"
+
+    decorators = [f"@{ast.unparse(d)}" for d in node.decorator_list]
+    dec_prefix = "\n".join(decorators) + "\n" if decorators else ""
+    return dec_prefix + ret
 
 
 class AstCodeParserVisitor(ast.NodeVisitor):

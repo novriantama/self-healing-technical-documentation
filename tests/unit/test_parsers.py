@@ -84,12 +84,15 @@ def test_ast_code_parser_classifications():
         assert "get_item" in chunk_dict
         api_chunk = chunk_dict["get_item"]
         assert api_chunk.type == "api_endpoint"
-        assert api_chunk.signature == "async def get_item(item_id: int) -> dict"
+        assert api_chunk.signature == "@app.get('/items/{item_id}')\nasync def get_item(item_id: int) -> dict"
 
         # 3. process_data
         assert "process_data" in chunk_dict
         cli_chunk = chunk_dict["process_data"]
         assert cli_chunk.type == "cli_command"
+        assert (
+            cli_chunk.signature == "@click.command()\n@click.option('--count', default=1)\ndef process_data(count: int)"
+        )
 
         # 4. RegularHelper
         assert "RegularHelper" in chunk_dict
@@ -112,6 +115,7 @@ def test_ast_code_parser_classifications():
         assert "EngineConfig" in chunk_dict
         config_chunk = chunk_dict["EngineConfig"]
         assert config_chunk.type == "configuration_schema"
+        assert config_chunk.signature == "@dataclass\nclass EngineConfig"
 
     finally:
         os.remove(temp_filepath)
