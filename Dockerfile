@@ -1,4 +1,5 @@
 FROM python:3.12-slim
+# Cache bust: 2026-07-19 15:46
 
 # Install git
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
