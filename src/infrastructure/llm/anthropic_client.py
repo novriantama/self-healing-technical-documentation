@@ -215,14 +215,15 @@ class AnthropicLlmClient(LlmGateway):
                 f"Original Document:\n{patch.original_content}\n\n"
                 f"Corrected Document:\n{patch.repaired_content}\n\n"
                 "Respond in JSON format with three keys:\n"
-                '1. "is_stale": boolean (true if the correction is invalid/stale/corrupt, false if it is valid and correct)\n'
+                '1. "is_valid": boolean (true if the correction is correct and accurate, false if it is invalid/stale/corrupt)\n'
                 '2. "confidence": float (between 0.0 and 1.0)\n'
                 '3. "explanation": string (describe your reasoning)\n'
             )
             res_text = self._call_llm(prompt)
             data = self._parse_json(res_text)
+            is_valid = data.get("is_valid", False)
             return VerificationResult(
-                is_stale=data.get("is_stale", True),
+                is_stale=not is_valid,
                 confidence=data.get("confidence", 0.0),
                 explanation=data.get("explanation", ""),
             )
