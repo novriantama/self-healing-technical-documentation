@@ -154,7 +154,8 @@ def main():
         sys.exit(0)
 
     # 3. Instantiate domain dependencies
-    git_provider = GitHubProvider("")
+    github_token = os.environ.get("GITHUB_TOKEN") or os.environ.get("INPUT_GITHUB_TOKEN") or ""
+    git_provider = GitHubProvider(github_token)
     code_parser = AstCodeParser()
     doc_parser = MistletoeDocParser()
     llm_client = AnthropicLlmClient(api_key=llm_api_key)
