@@ -31,4 +31,4 @@ outputs:
     description: 'JSON list of corrected documentation patches generated'
 runs:
   using: 'docker'
-  image: 'Dockerfile'
+  image: 'docker://ghcr.io/novriantama/self-healing-technical-documentation:latest'
